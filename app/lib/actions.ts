@@ -29,13 +29,11 @@ export async function createInvoice(formData: FormData) {
   });
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
-
   // Insert the invoice into the database
   await sql`
     INSERT INTO invoices (customer_id, amount, status, date)
     VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
   `;
-
   // This will revalidate the page and update the cache
   revalidatePath('/dashboard/invoices');
   // This will redirect the user to the invoices page
@@ -49,18 +47,22 @@ export async function updateInvoice(id: string, formData: FormData) {
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
-
   const amountInCents = amount * 100;
-
   // Update the invoice in the database
   await sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
     WHERE id = ${id}
   `;
-
   // This will clear the client cache and make a new server request
   revalidatePath('/dashboard/invoices');
   // This will redirect the user to the invoices page
   redirect('/dashboard/invoices');
+}
+
+export async function deleteInvoice(id: string) {
+  // Delete the invoice from the database
+  await sql`DELETE FROM invoices WHERE id = ${id}`;
+  // This will revalidate the page and update the cache
+  revalidatePath('/dashboard/invoices');
 }
