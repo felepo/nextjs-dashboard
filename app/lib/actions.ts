@@ -29,11 +29,16 @@ export async function createInvoice(formData: FormData) {
   });
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
-  // Insert the invoice into the database
-  await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-  `;
+
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (error) {
+    console.error(error);
+  }
+
   // This will revalidate the page and update the cache
   revalidatePath('/dashboard/invoices');
   // This will redirect the user to the invoices page
@@ -48,12 +53,17 @@ export async function updateInvoice(id: string, formData: FormData) {
     status: formData.get('status'),
   });
   const amountInCents = amount * 100;
-  // Update the invoice in the database
-  await sql`
-    UPDATE invoices
-    SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-    WHERE id = ${id}
-  `;
+
+  try {
+    await sql`
+      UPDATE invoices
+      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+      WHERE id = ${id}
+    `;
+  } catch(error) {
+    console.error(error);
+  }
+
   // This will clear the client cache and make a new server request
   revalidatePath('/dashboard/invoices');
   // This will redirect the user to the invoices page
