@@ -77,13 +77,25 @@ export async function createInvoice(prevState: State, formData: FormData) {
   redirect('/dashboard/invoices');
 }
 
-export async function updateInvoice(id: string, formData: FormData) {
-  // Extract the customerId, amount, and status from the form data and validate it
-  const { customerId, amount, status } = UpdateInvoice.parse({
+export async function updateInvoice(
+  id: string, 
+  prevState: State,
+  formData: FormData
+) {
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
 
   try {
@@ -94,11 +106,10 @@ export async function updateInvoice(id: string, formData: FormData) {
     `;
   } catch(error) {
     console.error(error);
+    return { message: 'Database Error. Failed to Update Invoice.' };
   }
 
-  // This will clear the client cache and make a new server request
   revalidatePath('/dashboard/invoices');
-  // This will redirect the user to the invoices page
   redirect('/dashboard/invoices');
 }
 
